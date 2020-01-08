@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/xyths/game-cashier/cmd/utils"
+	"github.com/xyths/game-cashier/puller"
 	"gopkg.in/urfave/cli.v2"
 	"log"
 )
@@ -34,6 +36,20 @@ var (
 
 func pull(ctx *cli.Context) error {
 	log.Println("pull started")
+	config, err := utils.ParseConfig(ctx.String(utils.ConfigFlag.Name))
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("network: %s, api_key: %s, manager: %s",
+		config.Server.Network, config.Server.ApiKey, config.Server.Manager)
+	p := new(puller.Puller)
+
+	if err = p.Init(config.Server.Network, config.Server.ApiKey, config.Server.Manager); err != nil {
+		log.Fatal(err)
+	}
+	if err = p.Pull(ctx.Context); err != nil {
+		log.Fatal(err)
+	}
 	return nil
 }
 

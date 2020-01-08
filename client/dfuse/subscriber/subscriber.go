@@ -59,14 +59,6 @@ func CreateClient(endpoint string, dfuseAPIKey string) pb.GraphQLClient {
 }
 
 const (
-	Query = `subscription {
-  searchTransactionsForward(query:"receiver:eosio.token action:transfer account:eosio.token receiver:eosio.token (data.from:eidosonecoin OR data.to:eidosonecoin)") {
-    undo cursor isIrreversible irreversibleBlockNum
-    block { id num timestamp }
-    trace { id status matchingActions { json } }
-  }
-}`
-
 	Mainnet     = "mainnet.eos.dfuse.io:443"
 	CryptoKylin = "kylin.eos.dfuse.io:443"
 	Jungle      = "jungle.eos.dfuse.io:443"

@@ -9,6 +9,14 @@ import (
 	"testing"
 )
 
+const Query = `subscription {
+  searchTransactionsForward(query:"receiver:eosio.token action:transfer account:eosio.token receiver:eosio.token (data.from:eidosonecoin OR data.to:eidosonecoin)") {
+    undo cursor isIrreversible irreversibleBlockNum
+    block { id num timestamp }
+    trace { id status matchingActions { json } }
+  }
+}`
+
 func TestCreateClient(t *testing.T) {
 	ctx := context.Background()
 	/* The client can be re-used for all requests, cache it at the appropriate level */
