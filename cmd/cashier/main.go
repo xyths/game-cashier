@@ -15,7 +15,7 @@ func init() {
 	app = &cli.App{
 		Name:    filepath.Base(os.Args[0]),
 		Usage:   "game cashier on blockchain",
-		Version: "0.0.2",
+		Version: "0.0.3",
 		Action:  serve,
 	}
 
@@ -23,6 +23,7 @@ func init() {
 		serveCommand,
 		pullCommand,
 		notifyCommand,
+		downloadCommand,
 	}
 	app.Flags = []cli.Flag{
 		utils.ConfigFlag,

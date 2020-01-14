@@ -1,6 +1,7 @@
 package cryptolions
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -87,6 +88,16 @@ func (cl *Cryptolions) Pull(ctx context.Context, after, before string) (records 
 	defer resp.Body.Close()
 
 	log.Println("Response status:", resp.Status)
+	if resp.StatusCode != 200 {
+		scanner := bufio.NewScanner(resp.Body)
+		for i := 0; scanner.Scan() && i < 5; i++ {
+			log.Println(scanner.Text())
+		}
+		if err := scanner.Err(); err != nil {
+			panic(err)
+		}
+		return
+	}
 
 	res := Response{}
 	if err := json.NewDecoder(resp.Body).Decode(&res); err == nil {

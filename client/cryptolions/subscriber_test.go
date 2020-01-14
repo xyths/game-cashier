@@ -1,6 +1,7 @@
 package cryptolions
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/xyths/game-cashier/types"
 	"net/http"
@@ -77,6 +78,6 @@ func TestCryptolion_Pull(t *testing.T) {
 	}
 	after := "2019-06-04T00:00:00.000+08:00"
 	before := "2019-06-05T00:00:00.000+08:00"
-	records, _ := cl.Pull(after, before)
+	records, _ := cl.Pull(context.TODO(), after, before)
 	t.Logf("records size: %d", len(records))
 }

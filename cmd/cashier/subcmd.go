@@ -25,6 +25,7 @@ var (
 		Aliases: []string{"p"},
 		Usage:   "pull the recharge history to database.",
 		Flags: []cli.Flag{
+			utils.DryRunFlag,
 		},
 	}
 	notifyCommand = &cli.Command{
@@ -33,6 +34,18 @@ var (
 		Aliases: []string{"n"},
 		Usage:   "pull the recharge history to database.",
 		Flags: []cli.Flag{
+			utils.DryRunFlag,
+		},
+	}
+	downloadCommand = &cli.Command{
+		Action:  download,
+		Name:    "download",
+		Aliases: []string{"d"},
+		Usage:   "manually download the recharge history to database.",
+		Flags: []cli.Flag{
+			utils.AfterFlag,
+			utils.BeforeFlag,
+			utils.DryRunFlag,
 		},
 	}
 )
@@ -109,5 +122,51 @@ func pull(ctx *cli.Context) error {
 
 func notify(ctx *cli.Context) error {
 	log.Println("notify started")
+	return nil
+}
+
+func download(ctx *cli.Context) error {
+	log.Println("manually download started")
+	config, err := utils.ParseConfig(ctx.String(utils.ConfigFlag.Name))
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("network: %s, api server: %s", config.Network, config.Server.ServerType)
+	after := ctx.String(utils.AfterFlag.Name)
+	before := ctx.String(utils.BeforeFlag.Name)
+	cl := cryptolions.Cryptolions{
+		Server:  config.Server.CryptoLions.Server,
+		Manager: config.Manager,
+	}
+	clientOpts := options.Client().ApplyURI(config.Mongo.URI)
+	client, err := mongo.Connect(ctx.Context, clientOpts)
+	if err != nil {
+		log.Fatal("Error when connect to mongo:", err)
+	}
+	// Check the connection
+	err = client.Ping(ctx.Context, nil)
+	if err != nil {
+		log.Fatal("Error when ping to mongo:", err)
+	}
+	coll := client.Database(config.Mongo.Database).Collection("transfer")
+	records, err := cl.Pull(ctx.Context, after, before)
+	after = before
+	if err != nil {
+		log.Printf("Error when upload: %s", err)
+	}
+	if len(records) == 0 {
+		return nil
+	}
+	docs := []interface{}{}
+	for _, r := range records {
+		docs = append(docs, r)
+	}
+
+	_, err = coll.InsertMany(ctx.Context, docs)
+	if err != nil {
+		log.Printf("error when insertMany: %s", err)
+	}
+
+	log.Println("manually download finished")
 	return nil
 }
