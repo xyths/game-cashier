@@ -61,5 +61,6 @@ func CreateClient(endpoint string, dfuseAPIKey string) pb.GraphQLClient {
 const (
 	Mainnet     = "mainnet.eos.dfuse.io:443"
 	CryptoKylin = "kylin.eos.dfuse.io:443"
-	Jungle      = "jungle.eos.dfuse.io:443"
+	//Jungle      = "jungle.eos.dfuse.io:443"
+	Jungle      = "jungle.eos.alt.dfuse.io:443"
 )

@@ -8,6 +8,7 @@ import (
 	"github.com/xyths/game-cashier/client/dfuse/subscriber"
 	"github.com/xyths/game-cashier/client/dfuse/types"
 	"log"
+	"os"
 )
 
 type Puller struct {
@@ -40,14 +41,16 @@ func (p *Puller) Init(network, apiKey, address string) error {
 
 func (p *Puller) Pull(ctx context.Context) error {
 	executor, err := p.client.Execute(ctx, &pb.Request{Query: p.query})
-	defer executor.CloseSend()
+	defer closeExcutor(executor)
 	if err != nil {
+		log.Printf("error when Execute: %s", err)
 		return err
 	}
 	for {
 		resp, err := executor.Recv()
 		if err != nil {
-			log.Fatal(err)
+			log.Printf("error when rev: %s", err)
+			break
 		}
 
 		if len(resp.Errors) > 0 {
@@ -60,9 +63,10 @@ func (p *Puller) Pull(ctx context.Context) error {
 		}
 
 		document := &types.EosioDocument{}
-		err = json.Unmarshal([]byte(resp.Data), document)
-		if err != nil {
-			log.Fatal(err)
+
+		if err = json.Unmarshal([]byte(resp.Data), document); err != nil {
+			log.Printf("error when decode respone: %s", err)
+			continue
 		}
 
 		result := document.SearchTransactionsForward
@@ -76,6 +80,7 @@ func (p *Puller) Pull(ctx context.Context) error {
 			fmt.Printf("Transfer %s -> %s (%s)[%s]%s\n", data["from"], data["to"], data["memo"], data["quantity"], reverted)
 		}
 	}
+	return nil
 }
 
 func (p *Puller) makeQuery() {
@@ -88,4 +93,16 @@ func (p *Puller) makeQuery() {
 }`
 	p.query = fmt.Sprintf(format, p.Address, p.Address)
 	log.Printf("query is: \n%s", p.query)
+}
+
+func closeExcutor(e pb.GraphQL_ExecuteClient) {
+	if e == nil {
+		return
+	}
+
+	if err := e.CloseSend(); err != nil {
+		log.Printf("error: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("connection closed.")
 }

@@ -6,13 +6,31 @@ import (
 	"os"
 )
 
-type Server struct {
-	Network string `json:"network"`
+type Dfuse struct {
 	ApiKey  string `json:"api_key"`
-	Manager string `json:"manager"'`
+	Manager string `json:"manager"`
 }
+
+type CryptoLions struct {
+	Server string `json:"server"`
+}
+
+type Server struct {
+	ServerType  string      `json:"serverType"` // dfuse cryptolions
+	Dfuse       Dfuse       `json:"dfuse"`
+	CryptoLions CryptoLions `json:"cryptolions"`
+}
+type MongoConf struct {
+	URI      string `json:"uri"`
+	Database string `json:"database"`
+}
+
 type Config struct {
-	Server Server `json:"server"`
+	Network  string    `json:"network"`
+	Manager  string    `json:"manager"`
+	Server   Server    `json:"server"`
+	Mongo    MongoConf `json:"mongo"`
+	Interval string    `json:"interval"`
 }
 
 func ParseConfig(filename string) (c Config, err error) {
