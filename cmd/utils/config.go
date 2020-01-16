@@ -21,8 +21,11 @@ type Server struct {
 	CryptoLions CryptoLions `json:"cryptolions"`
 }
 type MongoConf struct {
-	URI      string `json:"uri"`
-	Database string `json:"database"`
+	URI         string `json:"uri"`
+	Database    string `json:"database"`
+	MaxPoolSize uint64 `json:"maxPoolSize"`
+	MinPoolSize uint64 `json:"minPoolSize"`
+	AppName     string `json:"appName"`
 }
 
 type Config struct {
@@ -31,6 +34,7 @@ type Config struct {
 	Server   Server    `json:"server"`
 	Mongo    MongoConf `json:"mongo"`
 	Interval string    `json:"interval"`
+	Listen   string    `json:"listen"`
 }
 
 func ParseConfig(filename string) (c Config, err error) {

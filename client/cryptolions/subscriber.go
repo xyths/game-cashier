@@ -119,6 +119,7 @@ func extractRecord(response *Response, records *[]types.TransferRecord) {
 			From:        action.Act.Data.From,
 			To:          action.Act.Data.To,
 			Amount:      action.Act.Data.Amount,
+			Memo:        action.Act.Data.Memo,
 		}
 		*records = append(*records, r)
 	}

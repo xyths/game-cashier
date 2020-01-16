@@ -68,6 +68,7 @@ func pull(ctx *cli.Context) error {
 	}
 	clientOpts := options.Client().ApplyURI(config.Mongo.URI)
 	client, err := mongo.Connect(ctx.Context, clientOpts)
+	defer client.Disconnect(ctx.Context)
 	if err != nil {
 		log.Fatal("Error when connect to mongo:", err)
 	}
@@ -93,30 +94,17 @@ func pull(ctx *cli.Context) error {
 			if len(records) == 0 {
 				continue
 			}
-			docs := []interface{}{}
 			for _, r := range records {
-				docs = append(docs, r)
-			}
-
-			_, err = coll.InsertMany(ctx.Context, docs)
-			if err != nil {
-				log.Printf("error when insertMany: %s", err)
-				continue
+				// 单条插入，不管成功与否，都会继续下一条
+				if _, err = coll.InsertOne(ctx.Context, r); err != nil {
+					log.Print(err)
+				}
 			}
 
 			log.Println("Pull finished.")
 		}
 	}
-	//log.Printf("network: %s, api_key: %s, manager: %s",
-	//	config.Server.Network, config.Server.ApiKey, config.Server.Manager)
-	//p := new(puller.Puller)
-	//
-	//if err = p.Init(config.Server.Network, config.Server.ApiKey, config.Server.Manager); err != nil {
-	//	log.Fatal(err)
-	//}
-	//if err = p.Pull(ctx.Context); err != nil {
-	//	log.Fatal(err)
-	//}
+
 	return nil
 }
 
@@ -157,14 +145,11 @@ func download(ctx *cli.Context) error {
 	if len(records) == 0 {
 		return nil
 	}
-	docs := []interface{}{}
 	for _, r := range records {
-		docs = append(docs, r)
-	}
-
-	_, err = coll.InsertMany(ctx.Context, docs)
-	if err != nil {
-		log.Printf("error when insertMany: %s", err)
+		// 单条插入，不管成功与否，都会继续下一条
+		if _, err = coll.InsertOne(ctx.Context, r); err != nil {
+			log.Print(err)
+		}
 	}
 
 	log.Println("manually download finished")

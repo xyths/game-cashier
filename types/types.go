@@ -7,6 +7,7 @@ type TransferRecord struct {
 	From        string  `bson:"from"`
 	To          string  `bson:"to"`
 	Amount      float64 `bson:"amount"`
+	Memo        string  `bson:"memo"`
 	Timestamp   string  `bson:"timestamp"`
 	TxTime      string  `bson:"txTime"`
 	LogTime     string  `bson:"logTime"`

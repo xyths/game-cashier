@@ -6,6 +6,7 @@ replace google.golang.org/grpc => github.com/grpc/grpc-go v1.26.0
 
 require (
 	github.com/DataDog/zstd v1.4.4 // indirect
+	github.com/gin-gonic/gin v1.5.0
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/protobuf v1.3.2
 	github.com/golang/snappy v0.0.1 // indirect
@@ -15,8 +16,10 @@ require (
 	github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c // indirect
 	github.com/xdg/stringprep v1.0.0 // indirect
 	go.mongodb.org/mongo-driver v1.2.1
+	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
+	golang.org/x/net v0.0.0-20190620200207-3b0461eec859 // indirect
 	golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6
-	golang.org/x/tools v0.0.0-20200114015519-9dc88fb721c3
+	golang.org/x/sync v0.0.0-20190423024810-112230192c58 // indirect
 	google.golang.org/grpc v1.23.0
 	gopkg.in/urfave/cli.v2 v2.0.0-20190806201727-b62605953717
 )
