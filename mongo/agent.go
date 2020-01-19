@@ -94,7 +94,7 @@ func (ma *MongoAgent) UpdateNotifyTime(ctx context.Context, record types.Transfe
 		},
 		bson.D{
 			{"$currentDate", bson.D{
-				{"lastModified", true},
+				{"notifyTime", true},
 			}},
 		})
 
