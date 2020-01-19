@@ -13,3 +13,10 @@ type TransferRecord struct {
 	LogTime     string  `bson:"logTime"`
 	NotifyTime  string  `bson:"notifyTime"`
 }
+
+type NotifyElement struct {
+	Network string
+	Memo    string
+	Amount  float64
+	Tx      string
+}

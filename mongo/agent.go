@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"github.com/xyths/game-cashier/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"log"
@@ -58,11 +59,44 @@ func (ma *MongoAgent) GetHistory(ctx context.Context, memo, start, end string) (
 
 	cursor, err := coll.Find(ctx, filter)
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
 
 	if err = cursor.All(ctx, &records); err != nil {
-		log.Println(err)
+		return
 	}
 	return
+}
+
+func (ma *MongoAgent) NotNotified(ctx context.Context) (records []types.TransferRecord, err error) {
+	log.Printf("find record not notified yet from collection %s", transferColl)
+	coll := ma.Db.Collection(transferColl)
+	filter := bson.D{
+		{"notifyTime", ""},
+	}
+
+	cursor, err := coll.Find(ctx, filter)
+	if err != nil {
+		return
+	}
+
+	if err = cursor.All(ctx, &records); err != nil {
+		return
+	}
+	return
+}
+
+func (ma *MongoAgent) UpdateNotifyTime(ctx context.Context, record types.TransferRecord) error {
+	coll := ma.Db.Collection(transferColl)
+	_, err := coll.UpdateOne(ctx,
+		bson.D{
+			{"_id", record.Tx},
+		},
+		bson.D{
+			{"$currentDate", bson.D{
+				{"lastModified", true},
+			}},
+		})
+
+	return err
 }

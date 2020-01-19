@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/xyths/game-cashier/client/cryptolions"
 	"github.com/xyths/game-cashier/cmd/utils"
+	"github.com/xyths/game-cashier/node"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"gopkg.in/urfave/cli.v2"
@@ -110,7 +111,10 @@ func pull(ctx *cli.Context) error {
 
 func notify(ctx *cli.Context) error {
 	log.Println("notify started")
-	return nil
+	n := node.Node{}
+	n.Init(ctx.Context, ctx.String(utils.ConfigFlag.Name))
+
+	return n.Notify(ctx.Context)
 }
 
 func download(ctx *cli.Context) error {

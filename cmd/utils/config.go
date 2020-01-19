@@ -35,6 +35,7 @@ type Config struct {
 	Mongo    MongoConf `json:"mongo"`
 	Interval string    `json:"interval"`
 	Listen   string    `json:"listen"`
+	Notify   string    `json:"notify"`
 }
 
 func ParseConfig(filename string) (c Config, err error) {
