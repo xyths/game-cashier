@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 type Cryptolions struct {
@@ -109,6 +110,10 @@ func (cl *Cryptolions) Pull(ctx context.Context, after, before string) (records 
 	return
 }
 
+const (
+	mongoLayout = "2006-01-02T15:04:05.000"
+)
+
 func extractRecord(response *Response, records *[]types.TransferRecord) {
 	for _, action := range response.Actions {
 		r := types.TransferRecord{
@@ -121,6 +126,8 @@ func extractRecord(response *Response, records *[]types.TransferRecord) {
 			Amount:      action.Act.Data.Amount,
 			Memo:        action.Act.Data.Memo,
 		}
+		r.TxTime, _ = time.Parse(mongoLayout, r.Timestamp)
+		r.LogTime = time.Now()
 		*records = append(*records, r)
 	}
 }

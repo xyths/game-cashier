@@ -6,6 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"log"
+	"time"
 )
 
 type MongoAgent struct {
@@ -48,6 +49,11 @@ type History struct {
 
 func (ma *MongoAgent) GetHistory(ctx context.Context, memo, start, end string) (records []History, err error) {
 	log.Printf("find record from collection %s, memo is %s, time from %s to %s", transferColl, memo, start, end)
+	if start != "" {
+	}
+	if end != "" {
+
+	}
 	coll := ma.Db.Collection(transferColl)
 	if memo == "" {
 		return
@@ -55,7 +61,29 @@ func (ma *MongoAgent) GetHistory(ctx context.Context, memo, start, end string) (
 	filter := bson.D{
 		{"memo", memo},
 	}
-	//append(filter, bson.E{"start"})
+	hasTime := false
+	t := bson.D{}
+	if start != "" {
+		startDate, err := time.Parse(time.RFC3339, start)
+		if err != nil {
+			return records, err //inter err
+		}
+		t = append(t, bson.E{"$gte", startDate})
+		hasTime = true
+	}
+	if end != "" {
+		endDate, err := time.Parse(time.RFC3339, end)
+		if err != nil {
+			return records, err //inter err
+		}
+		t = append(t, bson.E{"$lte", endDate})
+		hasTime = true
+	}
+	if hasTime {
+		filter = append(filter, bson.E{
+			"txTime", t,
+		})
+	}
 
 	cursor, err := coll.Find(ctx, filter)
 	if err != nil {

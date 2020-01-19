@@ -81,6 +81,7 @@ func (n *Node) initEngine(ctx context.Context) {
 
 func (n *Node) getHistory(c *gin.Context) {
 	memo := c.Param("memo")
+	// RFC3339     = "2006-01-02T15:04:05Z07:00"
 	start := c.Query("start")
 	end := c.Query("end")
 	log.Printf("get history for memo %s, time from %s to %s", memo, start, end)
