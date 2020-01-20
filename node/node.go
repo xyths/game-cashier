@@ -11,6 +11,7 @@ import (
 	"github.com/eoscanada/eos-go/token"
 	"github.com/gin-gonic/gin"
 	"github.com/xyths/game-cashier/cmd/utils"
+	"math/rand"
 
 	//"github.com/xyths/game-cashier/cmd/utils"
 	"github.com/xyths/game-cashier/mongo"
@@ -34,6 +35,8 @@ type Node struct {
 	withdrawConfig utils.Withdraw
 
 	keyBag *eos.KeyBag
+
+	ch chan int
 }
 
 func (n *Node) Init(ctx context.Context, configFilename string) {
@@ -52,6 +55,8 @@ func (n *Node) Init(ctx context.Context, configFilename string) {
 
 	n.initMongo(ctx, c)
 	n.initEngine(ctx)
+	n.ch = make(chan int, 1)
+	rand.Seed(time.Now().Unix())
 }
 
 func (n *Node) initMongo(ctx context.Context, config utils.Config) {
@@ -107,8 +112,12 @@ func (n *Node) getHistory(c *gin.Context) {
 func (n *Node) withdraw(c *gin.Context) {
 	account := c.Param("account")
 	amount := c.Query("amount")
+	tx, err := n.send(c, account, amount)
+	if err1 := n.log(c, account, amount, tx); err1 != nil {
 
-	if tx, err := n.send(c, account, amount); err == nil {
+		log.Printf("error when log to mongo: %s", err1)
+	}
+	if err == nil {
 		c.JSON(http.StatusOK, gin.H{"tx": tx})
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{})
@@ -181,6 +190,9 @@ func (n *Node) UpdateNotify(ctx context.Context, r types.TransferRecord) error {
 	return ma.UpdateNotifyTime(ctx, r)
 }
 func (n *Node) send(ctx context.Context, account, amount string) (string, error) {
+	n.lock()
+	defer n.unLock()
+
 	// short connection
 	api := eos.New(n.withdrawConfig.BaseURL)
 	if n.keyBag == nil {
@@ -231,8 +243,30 @@ func (n *Node) send(ctx context.Context, account, amount string) (string, error)
 		log.Printf("push transaction: %s", err)
 		return "", err
 	}
+
 	txHash := hex.EncodeToString(response.Processed.ID)
 
 	log.Printf("Transaction [%s] submitted to the network succesfully.\n", txHash)
 	return txHash, nil
+}
+func (n *Node) log(ctx context.Context, account, amount, tx string) error {
+	w := types.WithdrawLog{
+		From:   n.withdrawConfig.Account,
+		To:     account,
+		Amount: amount,
+		Tx:     tx,
+		Time:   time.Now(),
+	}
+	_, err := n.db.Collection("withdraw").InsertOne(ctx, w)
+	return err
+}
+
+func (n *Node) lock() {
+	r := rand.Int()
+	log.Printf("thread %d locked", r)
+	n.ch <- r
+}
+func (n *Node) unLock() {
+	r := <-n.ch
+	log.Printf("thread %d unlocked", r)
 }

@@ -12,7 +12,7 @@ type TransferRecord struct {
 	Memo        string    `bson:"memo"`
 	Timestamp   string    `bson:"timestamp"`
 	TxTime      time.Time `bson:"txTime"`
-	LogTime     time.Time    `bson:"logTime"`
+	LogTime     time.Time `bson:"logTime"`
 	NotifyTime  string    `bson:"notifyTime"`
 }
 
@@ -21,4 +21,13 @@ type NotifyElement struct {
 	Memo    string
 	Amount  float64
 	Tx      string
+}
+
+type WithdrawLog struct {
+	// auto id
+	From   string
+	To     string
+	Amount string
+	Tx     string
+	Time   time.Time `bson:"logTime"`
 }
