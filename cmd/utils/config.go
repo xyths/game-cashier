@@ -36,6 +36,13 @@ type Config struct {
 	Interval string    `json:"interval"`
 	Listen   string    `json:"listen"`
 	Notify   string    `json:"notify"`
+	Withdraw Withdraw
+}
+
+type Withdraw struct {
+	BaseURL    string
+	Account    string
+	PrivateKey string
 }
 
 func ParseConfig(filename string) (c Config, err error) {

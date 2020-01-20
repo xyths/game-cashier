@@ -4,9 +4,15 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
+	"github.com/eoscanada/eos-go"
+	"github.com/eoscanada/eos-go/token"
 	"github.com/gin-gonic/gin"
 	"github.com/xyths/game-cashier/cmd/utils"
+
+	//"github.com/xyths/game-cashier/cmd/utils"
 	"github.com/xyths/game-cashier/mongo"
 	"github.com/xyths/game-cashier/types"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -22,9 +28,12 @@ type Node struct {
 	Addr   string
 	Engine *gin.Engine
 
-	duration  time.Duration
-	network   string
-	notifyUrl string
+	duration       time.Duration
+	network        string
+	notifyUrl      string
+	withdrawConfig utils.Withdraw
+
+	keyBag *eos.KeyBag
 }
 
 func (n *Node) Init(ctx context.Context, configFilename string) {
@@ -39,6 +48,7 @@ func (n *Node) Init(ctx context.Context, configFilename string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	n.withdrawConfig = c.Withdraw
 
 	n.initMongo(ctx, c)
 	n.initEngine(ctx)
@@ -73,6 +83,7 @@ func (n *Node) initEngine(ctx context.Context) {
 	}))
 	{
 		authorized.GET("/history/:memo", n.getHistory)
+		authorized.GET("/withdraw/:account", n.withdraw)
 	}
 
 	n.Engine = r
@@ -81,7 +92,6 @@ func (n *Node) initEngine(ctx context.Context) {
 
 func (n *Node) getHistory(c *gin.Context) {
 	memo := c.Param("memo")
-	// RFC3339     = "2006-01-02T15:04:05Z07:00"
 	start := c.Query("start")
 	end := c.Query("end")
 	log.Printf("get history for memo %s, time from %s to %s", memo, start, end)
@@ -89,6 +99,17 @@ func (n *Node) getHistory(c *gin.Context) {
 	ma := agent.MongoAgent{Db: n.db}
 	if records, err := ma.GetHistory(c, memo, start, end); err == nil {
 		c.JSON(http.StatusOK, records)
+	} else {
+		c.JSON(http.StatusInternalServerError, gin.H{})
+	}
+}
+
+func (n *Node) withdraw(c *gin.Context) {
+	account := c.Param("account")
+	amount := c.Query("amount")
+
+	if tx, err := n.send(c, account, amount); err == nil {
+		c.JSON(http.StatusOK, gin.H{"tx": tx})
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{})
 	}
@@ -158,4 +179,60 @@ func (n *Node) NotifyOne(ctx context.Context, r types.TransferRecord) (success b
 func (n *Node) UpdateNotify(ctx context.Context, r types.TransferRecord) error {
 	ma := agent.MongoAgent{Db: n.db}
 	return ma.UpdateNotifyTime(ctx, r)
+}
+func (n *Node) send(ctx context.Context, account, amount string) (string, error) {
+	// short connection
+	api := eos.New(n.withdrawConfig.BaseURL)
+	if n.keyBag == nil {
+		n.keyBag = &eos.KeyBag{}
+		err := n.keyBag.ImportPrivateKey(n.withdrawConfig.PrivateKey)
+		if err != nil {
+			log.Printf("import private key: %s", err)
+			return "", err
+		}
+
+	}
+	api.SetSigner(n.keyBag)
+
+	from := eos.AccountName(n.withdrawConfig.Account)
+	to := eos.AccountName(account)
+
+	quantity, err := eos.NewEOSAssetFromString(fmt.Sprintf("%s EOS", amount))
+	memo := ""
+
+	if err != nil {
+		log.Printf("invalid quantity: %s", err)
+		return "", err
+	}
+
+	txOpts := &eos.TxOptions{}
+	if err := txOpts.FillFromChain(api); err != nil {
+		log.Printf("filling tx opts: %s", err)
+		return "", err
+	}
+
+	tx := eos.NewTransaction([]*eos.Action{token.NewTransfer(from, to, quantity, memo)}, txOpts)
+	signedTx, packedTx, err := api.SignTransaction(tx, txOpts.ChainID, eos.CompressionNone)
+	if err != nil {
+		log.Printf("sign transaction: %s", err)
+		return "", err
+	}
+
+	content, err := json.MarshalIndent(signedTx, "", "  ")
+	if err != nil {
+		log.Printf("json marshalling transaction: %s", err)
+		return "", err
+	}
+
+	log.Println(string(content))
+
+	response, err := api.PushTransaction(packedTx)
+	if err != nil {
+		log.Printf("push transaction: %s", err)
+		return "", err
+	}
+	txHash := hex.EncodeToString(response.Processed.ID)
+
+	log.Printf("Transaction [%s] submitted to the network succesfully.\n", txHash)
+	return txHash, nil
 }
