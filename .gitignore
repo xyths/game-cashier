@@ -1,4 +1,5 @@
 vendor
 cashier
 cashier_linux
+cashier_darwin
 .idea
