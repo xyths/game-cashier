@@ -138,8 +138,7 @@ func (p *Puller) makeQuery() {
     trace { id status scheduled matchingActions { seq json } }
   }
 }`
-	//p.query = fmt.Sprintf(format, p.Address)
-	p.query = fmt.Sprintf(format, "eidosonecoin")
+	p.query = fmt.Sprintf(format, p.Address)
 	log.Printf("query is: \n%s", p.query)
 
 	//	p.query=`subscription {
