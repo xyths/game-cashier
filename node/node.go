@@ -114,7 +114,6 @@ func (n *Node) withdraw(c *gin.Context) {
 	amount := c.Query("amount")
 	tx, err := n.send(c, account, amount)
 	if err1 := n.log(c, account, amount, tx); err1 != nil {
-
 		log.Printf("error when log to mongo: %s", err1)
 	}
 	if err == nil {

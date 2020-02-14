@@ -4,6 +4,8 @@ import (
 	"github.com/xyths/game-cashier/client/cryptolions"
 	"github.com/xyths/game-cashier/cmd/utils"
 	"github.com/xyths/game-cashier/node"
+	"github.com/xyths/game-cashier/puller"
+	"github.com/xyths/game-cashier/types"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"gopkg.in/urfave/cli.v2"
@@ -58,6 +60,17 @@ func pull(ctx *cli.Context) error {
 		log.Fatal(err)
 	}
 	log.Printf("network: %s, api server: %s", config.Network, config.Server.ServerType)
+	if config.Server.ServerType == "cryptolions" {
+		return pullFromCryptolions(ctx, config)
+	} else if config.Server.ServerType == "dfuse" {
+		return pullFromDfuse(ctx, config)
+	} else {
+		log.Printf("unknown server type: %s", config.Server.ServerType)
+		return nil
+	}
+}
+
+func pullFromCryptolions(ctx *cli.Context, config utils.Config) error {
 	d, err := time.ParseDuration(config.Interval)
 	if err != nil {
 		log.Fatal(err)
@@ -78,7 +91,7 @@ func pull(ctx *cli.Context) error {
 	if err != nil {
 		log.Fatal("Error when ping to mongo:", err)
 	}
-	coll := client.Database(config.Mongo.Database).Collection("transfer")
+	coll := client.Database(config.Mongo.Database).Collection(types.TransferCollName)
 	for {
 		select {
 		case <-ctx.Context.Done():
@@ -107,6 +120,28 @@ func pull(ctx *cli.Context) error {
 	}
 
 	return nil
+
+}
+
+func pullFromDfuse(ctx *cli.Context, config utils.Config) error {
+	clientOpts := options.Client().ApplyURI(config.Mongo.URI)
+	client, err := mongo.Connect(ctx.Context, clientOpts)
+	defer client.Disconnect(ctx.Context)
+	if err != nil {
+		log.Fatal("Error when connect to mongo:", err)
+	}
+	// Check the connection
+	err = client.Ping(ctx.Context, nil)
+	if err != nil {
+		log.Fatal("Error when ping to mongo:", err)
+	}
+	db := client.Database(config.Mongo.Database)
+	p := puller.Puller{}
+	if err := p.Init(config.Network, config.Server.Dfuse.ApiKey, config.Server.Dfuse.Manager, db); err != nil {
+		log.Fatalf("error when init puller object: %s", err)
+	}
+
+	return p.Pull(ctx)
 }
 
 func notify(ctx *cli.Context) error {

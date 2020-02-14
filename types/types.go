@@ -3,8 +3,8 @@ package types
 import "time"
 
 type TransferRecord struct {
-	Id          string    `bson:"_id"`
-	Tx          string    `bson:"tx"`
+	Id          string    `bson:"_id"` // tx id + seq
+	Tx          string    `bson:"tx"`  // tx id
 	BlockNumber uint64    `bson:"blockNumer"`
 	From        string    `bson:"from"`
 	To          string    `bson:"to"`
@@ -15,6 +15,8 @@ type TransferRecord struct {
 	LogTime     time.Time `bson:"logTime"`
 	NotifyTime  string    `bson:"notifyTime"`
 }
+
+const TransferCollName = "transfer"
 
 type NotifyElement struct {
 	Network string
