@@ -21,8 +21,7 @@ func init() {
 	app = &cli.App{
 		Name:    filepath.Base(os.Args[0]),
 		Usage:   "game cashier on blockchain",
-		Version: "0.3.2",
-		//Action:  serve,
+		Version: "0.3.3",
 	}
 
 	app.Commands = []*cli.Command{

@@ -61,8 +61,7 @@ func (p *Puller) Pull(ctx context.Context) error {
 		default:
 			resp, err := executor.Recv()
 			if err != nil {
-				log.Printf("error when rev: %s", err)
-				break
+				log.Fatalf("error when rev: %s", err) // restart by supervisor
 			}
 
 			if len(resp.Errors) > 0 {
