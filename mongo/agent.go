@@ -118,7 +118,7 @@ func (ma *MongoAgent) UpdateNotifyTime(ctx context.Context, record types.Transfe
 	coll := ma.Db.Collection(transferColl)
 	_, err := coll.UpdateOne(ctx,
 		bson.D{
-			{"_id", record.Tx},
+			{"_id", record.Id},
 		},
 		bson.D{
 			{"$currentDate", bson.D{
